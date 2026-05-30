@@ -1,6 +1,3 @@
-// Copyright 2022 Charles University
-// SPDX-License-Identifier: Apache-2.0
-
 #include <algorithm>
 #include <array>
 #include <cassert>

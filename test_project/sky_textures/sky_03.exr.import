@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://7uwoxu3t0fi6"
-path.bptc="res://.godot/imported/sky_720.exr-a8a961e085184db8cd0dd8446d3f7567.bptc.ctex"
+uid="uid://57bbur3uciuh"
+path.bptc="res://.godot/imported/sky_03.exr-e840d7c071a98046e3b93f55ae5a4250.bptc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://skyTextures/sky_720.exr"
-dest_files=["res://.godot/imported/sky_720.exr-a8a961e085184db8cd0dd8446d3f7567.bptc.ctex"]
+source_file="res://sky_textures/sky_03.exr"
+dest_files=["res://.godot/imported/sky_03.exr-e840d7c071a98046e3b93f55ae5a4250.bptc.ctex"]
 
 [params]
 

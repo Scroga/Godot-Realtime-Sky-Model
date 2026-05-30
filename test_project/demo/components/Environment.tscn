@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://bb2lp50sjndus"]
 
 [ext_resource type="Shader" uid="uid://drhd6pdgs6a24" path="res://shaders/sky.gdshader" id="1_k01qk"]
-[ext_resource type="Texture2D" uid="uid://ck14sefy34fmh" path="res://skyTextures/sky_1080.exr" id="2_nntnf"]
+[ext_resource type="Texture2D" uid="uid://ck14sefy34fmh" path="res://sky_textures/sky_1080.exr" id="2_nntnf"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_nntnf"]
 shader = ExtResource("1_k01qk")

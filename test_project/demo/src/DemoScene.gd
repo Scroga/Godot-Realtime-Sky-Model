@@ -4,9 +4,6 @@ extends Node
 @onready var terrain: Terrain3D = find_child("Terrain3D")
 
 func _ready():
-	var generator = SkyTextureGenerator.new()
-	generator.generate()
-	
 	if not Engine.is_editor_hint() and has_node("UI"):
 		$UI.player = $Player
 

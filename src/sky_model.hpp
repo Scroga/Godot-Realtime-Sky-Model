@@ -1,6 +1,5 @@
-// Copyright 2022 Charles University
-// SPDX-License-Identifier: Apache-2.0
-#pragma once
+#ifndef SKY_MODEL_HPP
+#define SKY_MODEL_HPP
 
 #include <cmath>
 #include <exception>
@@ -491,3 +490,5 @@ private:
 			const std::vector<float> &data,
 			const Metadata &metadata) const;
 };
+
+#endif

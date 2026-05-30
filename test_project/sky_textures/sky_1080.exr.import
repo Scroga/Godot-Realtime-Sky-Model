@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ck14sefy34fmh"
-path.bptc="res://.godot/imported/sky_1080.exr-897f1818deaab1bd825b5f4a0701c87d.bptc.ctex"
+path.bptc="res://.godot/imported/sky_1080.exr-6b99dd0177b848bba321f57655c3e83b.bptc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://skyTextures/sky_1080.exr"
-dest_files=["res://.godot/imported/sky_1080.exr-897f1818deaab1bd825b5f4a0701c87d.bptc.ctex"]
+source_file="res://sky_textures/sky_1080.exr"
+dest_files=["res://.godot/imported/sky_1080.exr-6b99dd0177b848bba321f57655c3e83b.bptc.ctex"]
 
 [params]
 
