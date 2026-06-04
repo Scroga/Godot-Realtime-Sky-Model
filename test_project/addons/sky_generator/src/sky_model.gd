@@ -35,32 +35,22 @@ func _generate_texture() -> void:
 		push_error("sky_material is null")
 		return
 
-	sky_texture_generator.generate()
-
-	if not Engine.is_editor_hint():
+	var image: Image = sky_texture_generator.generate()
+	
+	if image == null:
+		push_error("Sky image generation failed.")
 		return
-
-	var path := "res://sky.exr"
-
-	var fs := EditorInterface.get_resource_filesystem()
-	fs.update_file(path)
-	fs.reimport_files([path])
-
-	var texture := load(path) as Texture2D
-	if texture == null:
-		push_error("Could not load texture: " + path)
-		return
-
+	
+	var texture: ImageTexture = ImageTexture.create_from_image(image)
 	sky_material.set_shader_parameter("skyTexture", texture)
 
 @export_group("Texture Generator")
 
-@export_tool_button("    Read Dataset    ")
+@export_tool_button("Read Dataset")
 var read_dataset_button = _read_dataset
 
 @export_tool_button("Generate Sky Texture")
 var generate_button = _generate_texture
-
 
 
 #####################
@@ -78,11 +68,11 @@ func _initialize() -> void:
 		environment = Environment.new()
 		environment.background_mode = Environment.BG_SKY
 		environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-		#environment.ambient_light_sky_contribution = 0.7
-		#environment.ambient_light_energy = 1.0
-		#environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
-		#environment.tonemap_mode = Environment.TONE_MAPPER_ACES
-		#environment.tonemap_white = 6
+		environment.ambient_light_sky_contribution = 0.7
+		environment.ambient_light_energy = 1.0
+		environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+		environment.tonemap_mode = Environment.TONE_MAPPER_ACES
+		environment.tonemap_white = 6
 		emit_signal("environment_changed", environment)
 		
 	# Setup Sky material & Upgrade old
@@ -91,15 +81,15 @@ func _initialize() -> void:
 		environment.sky.sky_material = ShaderMaterial.new()
 		environment.sky.sky_material.shader = load(SKY_SHADER)
 		
-			# Set a reference to the sky material for easy access.
+	# Set a reference to the sky material for easy access.
 	sky_material = environment.sky.sky_material
 		
 	# Create default camera attributes
 	if camera_attributes == null:
 		camera_attributes = CameraAttributesPractical.new()
 	
-	if has_node("TextureGenerator"):
-		sky_texture_generator = $TextureGenerator
+	if has_node("SkyTextureGenerator"):
+		sky_texture_generator = $SkyTextureGenerator
 	elif is_inside_tree():
 		sky_texture_generator = SkyTextureGenerator.new()
 		add_child(sky_texture_generator, true)

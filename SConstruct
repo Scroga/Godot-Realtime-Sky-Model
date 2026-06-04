@@ -36,9 +36,10 @@ customs = [os.path.abspath(path) for path in customs]
 
 # Define GDExtension-specific options
 opts = Variables(customs, ARGUMENTS)
-opts.Add('source_dirs', 'List of source directories (comma-separated)', 'src,thirdparty/tinyexr,thirdparty/miniz') # Directory for source files
+opts.Add('source_dirs', 'List of source directories (comma-separated)', 'src') # Directory for source files
 opts.Add('source_exts', 'List of source file extensions (comma-separated)', '.cpp,.c,.cc,.cxx') 
-opts.Add('include_dirs', 'List of include directories (comma-separated)', 'src,thirdparty,thirdparty/miniz') # Directory for headers - some might want to create a separate include directory
+opts.Add('include_dirs', 'List of include directories (comma-separated)', # Directory for headers - some might want to create a separate include directory
+'godot-cpp/include,godot-cpp/gen/include,godot-cpp/gdextension,src')
 opts.Add('doc_output_dir', 'Directory for documentation output', 'gen')
 opts.Add('precision', 'Floating-point precision (single or double)', 'single')  # Default to single
 opts.Add('bundle_id_prefix', 'Bundle identifier prefix (reverse-DNS format)', 'com.gdextension')  # Default prefix

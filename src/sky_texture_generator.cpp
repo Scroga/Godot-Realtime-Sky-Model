@@ -1,6 +1,7 @@
 #include "sky_texture_generator.hpp"
 
-#include <tinyexr/tinyexr.h>
+#include <godot_cpp/variant/packed_byte_array.hpp>
+#include <godot_cpp/variant/string.hpp>
 
 #include <assert.h>
 #include <algorithm>
@@ -9,8 +10,8 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <cstring>
 
-#include <godot_cpp/variant/string.hpp>
 
 SkyTextureGenerator::SkyTextureGenerator() {
 	available.albedoMin = 0.0;
@@ -38,6 +39,7 @@ SkyTextureGenerator::SkyTextureGenerator() {
 
 void SkyTextureGenerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("generate"), &SkyTextureGenerator::generate);
+	ClassDB::bind_method(D_METHOD("read_dataset"), &SkyTextureGenerator::readDataset);
 
 	ClassDB::bind_method(D_METHOD("set_dataset_path", "path"), &SkyTextureGenerator::setDatasetPath);
 	ClassDB::bind_method(D_METHOD("get_dataset_path"), &SkyTextureGenerator::getDatasetPath);
@@ -48,11 +50,14 @@ void SkyTextureGenerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_altitude", "value"), &SkyTextureGenerator::setAltitude);
 	ClassDB::bind_method(D_METHOD("get_altitude"), &SkyTextureGenerator::getAltitude);
 
+	ClassDB::bind_method(D_METHOD("set_elevation", "value"), &SkyTextureGenerator::setElevation);
+	ClassDB::bind_method(D_METHOD("get_elevation"), &SkyTextureGenerator::getElevation);
+
 	ClassDB::bind_method(D_METHOD("set_visibility", "value"), &SkyTextureGenerator::setVisibility);
 	ClassDB::bind_method(D_METHOD("get_visibility"), &SkyTextureGenerator::getVisibility);
 
-	ClassDB::bind_method(D_METHOD("read_dataset"), &SkyTextureGenerator::readDataset);
-	ClassDB::bind_method(D_METHOD("generate"), &SkyTextureGenerator::generate);
+	ClassDB::bind_method(D_METHOD("set_resolution", "value"), &SkyTextureGenerator::setResolution);
+	ClassDB::bind_method(D_METHOD("get_resolution"), &SkyTextureGenerator::getResolution);
 }
 
 bool SkyTextureGenerator::_set(const StringName &p_name, const Variant &p_value) {
@@ -308,8 +313,8 @@ void SkyTextureGenerator::render(SkyModel &model, std::vector<std::vector<float>
 	const double azimuth = 0.0;
 	SkyModel::FrameInterpolationParameters frameIterParams = model.computeFrameInterpolationParameters(
 			viewPoint,
-			elevation,
-			azimuth,
+			degreesToRadians(elevation),
+			degreesToRadians(azimuth),
 			visibility,
 			albedo);
 
@@ -376,8 +381,9 @@ void SkyTextureGenerator::readDataset() {
 	}
 }
 
-void SkyTextureGenerator::generate() const {
+Ref<Image> SkyTextureGenerator::generate() const {
 	std::vector<std::vector<float>> result;
+	Ref<Image> image;
 
 	try {
 		// Initialize the model with the given dataset file.
@@ -387,16 +393,24 @@ void SkyTextureGenerator::generate() const {
 		//Render sky image according to the given configuration.
 		render(skyModel, result);
 
-		// Save the result buffer into an EXR file.
-		const char *err = nullptr;
-		int ret = SaveEXR(result[0].data(), resolution, resolution, 3, 0, outputFile.c_str(), &err);
-		if (ret != TINYEXR_SUCCESS) {
-			const std::string message(std::string("Saving EXR failed - ") + std::string(err));
-			FreeEXRErrorMessage(err); // Frees buffer for an error message
-			throw std::runtime_error(message);
+		if (result.empty() || result[0].empty()) {
+			ERR_PRINT("Render result is empty.");
+			return Ref<Image>();
 		}
+
+		// Save the result buffer into an godot::Image.
+		PackedByteArray bytes;
+		bytes.resize(resolution * resolution * 3 * sizeof(float));
+		memcpy(bytes.ptrw(), result[0].data(), bytes.size());
+
+		image.instantiate();
+
+		image->set_data(resolution, resolution, false, Image::FORMAT_RGBF, bytes);
+
 		print_line("Done\n");
 	} catch (std::exception &e) {
-		ERR_PRINT(godot::String("Error: ") + e.what());
+		ERR_PRINT(String("Error: ") + e.what());
+		return Ref<Image>();
 	}
+	return image;
 }

@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
+#include <godot_cpp/classes/image.hpp>
 
 #include "constants.hpp"
 #include "sky_model.hpp"
@@ -110,7 +111,7 @@ public:
 	bool _property_get_revert(const StringName &p_name, Variant &r_property) const;
 
 	void readDataset();
-	void generate() const;
+	Ref<Image> generate() const;
 };
 
 #endif
