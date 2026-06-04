@@ -63,12 +63,15 @@ private:
 		return paramsName + String("/") + name;
 	}
 
+	unsigned char SkyTextureGenerator::pixToTex(const float pixel) const;
+	SkyModel::Vector3 rotateAroundZ(const SkyModel::Vector3 &v, double angle) const;
+
 	/// Computes direction corresponding to given pixel coordinates in up-facing projection.
 	SkyModel::Vector3 pixelToDirection(int x, int y, int resolution) const;
 	/// Converts given spectrum to sRGB.
 	SkyModel::Vector3 spectrumToRGB(const Spectrum &spectrum) const;
 	/// Renders a simple fisheye RGB image of the sky.
-	void render(SkyModel &model, std::vector<std::vector<float>> &outResult) const;
+	void render(SkyModel &model, std::vector<float> &outResult) const;
 
 	double albedo;
 	double altitude;

@@ -16,9 +16,8 @@ var sky_material: ShaderMaterial
 var sky_texture_generator: SkyTextureGenerator
 
 #####################
-## Texture Generator
+## Texture Generation
 #####################
-
 func _read_dataset() -> void:
 	if sky_texture_generator == null:
 		push_error("sky_texture_generator is null")
@@ -44,13 +43,26 @@ func _generate_texture() -> void:
 	var texture: ImageTexture = ImageTexture.create_from_image(image)
 	sky_material.set_shader_parameter("skyTexture", texture)
 
-@export_group("Texture Generator")
+@export_group("Texture Generation")
 
 @export_tool_button("Read Dataset")
 var read_dataset_button = _read_dataset
 
 @export_tool_button("Generate Sky Texture")
 var generate_button = _generate_texture
+
+#####################
+## Texture Parameters
+#####################
+
+@export_group("Texture Parameters")
+
+@export_range(-10.0, 10.0, 0.1)
+var exposure: float = -5.0:
+	set(value):
+		exposure = value
+		if sky_material:
+			sky_material.set_shader_parameter("exposure", exposure)
 
 
 #####################

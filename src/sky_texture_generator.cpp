@@ -6,12 +6,11 @@
 #include <assert.h>
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <execution>
 #include <limits>
 #include <string>
 #include <vector>
-#include <cstring>
-
 
 SkyTextureGenerator::SkyTextureGenerator() {
 	available.albedoMin = 0.0;
@@ -32,6 +31,7 @@ SkyTextureGenerator::SkyTextureGenerator() {
 	elevation = 0.0;
 	visibility = 59.4;
 	resolution = 128;
+	
 
 	outputFile = "sky.exr";
 	datasetPath = "SkyModelDataset.dat";
@@ -291,24 +291,26 @@ SkyModel::Vector3 SkyTextureGenerator::spectrumToRGB(const Spectrum &spectrum) c
 	return rgb;
 }
 
-void SkyTextureGenerator::render(SkyModel &model, std::vector<std::vector<float>> &outResult) const {
+SkyModel::Vector3 SkyTextureGenerator::rotateAroundZ(const SkyModel::Vector3 &v, double angle) const {
+	const double c = std::cos(angle);
+	const double s = std::sin(angle);
+	return SkyModel::Vector3(c * v.x - s * v.y, s * v.x + c * v.y, v.z);
+}
+
+unsigned char SkyTextureGenerator::pixToTex(const float pixel) const {
+	return (unsigned char)(std::floor(std::clamp(255.f, 0.f, 255.f)));
+}
+
+void SkyTextureGenerator::render(SkyModel &model, std::vector<float> &outResult) const {
 	assert(model.isInitialized());
-	// We are viewing the sky from 'altitude' meters above the origin.
-	const SkyModel::Vector3 viewPoint = SkyModel::Vector3(0.0, 0.0, altitude);
+	const unsigned int xTextureSize = resolution / 2;
+	const unsigned int yTextureSize = resolution;
 
 	// Resize the output buffer.
-	outResult.resize(SPECTRUM_CHANNELS + 1);
-	outResult[0].resize(size_t(resolution) * resolution * 3); // RGB
-	for (int c = 1; c < SPECTRUM_CHANNELS + 1; c++) {
-		outResult[c].resize(size_t(resolution) * resolution); // mono
-	}
+	outResult.resize(size_t(xTextureSize) * yTextureSize * 3);
 
-	// Zero the output buffer.
-	for (int c = 0; c < SPECTRUM_CHANNELS + 1; c++) {
-		for (int i = 0; i < outResult[c].size(); i++) {
-			outResult[c][i] = 0.f;
-		}
-	}
+	// We are viewing the sky from 'altitude' meters above the origin.
+	const SkyModel::Vector3 viewPoint = SkyModel::Vector3(0.0, 0.0, altitude);
 
 	const double azimuth = 0.0;
 	SkyModel::FrameInterpolationParameters frameIterParams = model.computeFrameInterpolationParameters(
@@ -319,20 +321,20 @@ void SkyTextureGenerator::render(SkyModel &model, std::vector<std::vector<float>
 			albedo);
 
 	std::vector<int> xs;
-	xs.resize(resolution);
-	for (int x = 0; x < resolution; x++) {
+	xs.resize(xTextureSize);
+	for (int x = 0; x < xTextureSize; x++) {
 		xs[x] = x;
 	}
 
 	std::for_each(std::execution::par, xs.begin(), xs.end(),
-			[this, &model, &frameIterParams, &viewPoint, &outResult](auto &&x) {
-				for (int y = 0; y < this->resolution; y++) {
-					// For each pixel of the rendered image get the corresponding direction in fisheye
-					// projection.
-					const SkyModel::Vector3 viewDir = this->pixelToDirection(x, y, this->resolution);
+			[this, &model, &frameIterParams, &viewPoint, &xTextureSize , &yTextureSize, &outResult](auto &&x) {
+				for (int y = 0; y < yTextureSize; y++) {
+					// For each pixel of the rendered image get the corresponding direction in fisheye projection.
+					const int sourceX = x + xTextureSize;
+					SkyModel::Vector3 viewDir = this->pixelToDirection(sourceX, y, resolution);
+					viewDir = this->rotateAroundZ(viewDir, degreesToRadians(90.0));
 
-					// If the pixel lies outside the upper hemisphere, the direction will be zero. Such
-					// a pixel is kept black.
+					// If the pixel lies outside the upper hemisphere, the direction will be zero. Such a pixel is kept black.
 					if (viewDir.isZero()) {
 						continue;
 					}
@@ -346,14 +348,12 @@ void SkyTextureGenerator::render(SkyModel &model, std::vector<std::vector<float>
 
 					// Convert the spectral quantity to sRGB and store it at 0 in the result buffer.
 					const SkyModel::Vector3 rgb = this->spectrumToRGB(spectrum);
-					outResult[0][(size_t(x) * this->resolution + y) * 3] = float(rgb.x);
-					outResult[0][(size_t(x) * this->resolution + y) * 3 + 1] = float(rgb.y);
-					outResult[0][(size_t(x) * this->resolution + y) * 3 + 2] = float(rgb.z);
 
-					// Store the individual channels.
-					for (int c = 1; c < SPECTRUM_CHANNELS + 1; c++) {
-						outResult[c][(size_t(x) * this->resolution + y)] = float(spectrum[c - 1]);
-					}
+					const size_t index = (size_t(y) * xTextureSize + x) * 3;
+
+					outResult[index + 0] = float(rgb.x);
+					outResult[index + 1] = float(rgb.y);
+					outResult[index + 2] = float(rgb.z);
 				}
 			});
 }
@@ -382,7 +382,10 @@ void SkyTextureGenerator::readDataset() {
 }
 
 Ref<Image> SkyTextureGenerator::generate() const {
-	std::vector<std::vector<float>> result;
+	const unsigned int xTextureSize = resolution / 2;
+	const unsigned int yTextureSize = resolution;
+
+	std::vector<float> result;
 	Ref<Image> image;
 
 	try {
@@ -393,19 +396,19 @@ Ref<Image> SkyTextureGenerator::generate() const {
 		//Render sky image according to the given configuration.
 		render(skyModel, result);
 
-		if (result.empty() || result[0].empty()) {
+		if (result.empty()) {
 			ERR_PRINT("Render result is empty.");
 			return Ref<Image>();
 		}
 
 		// Save the result buffer into an godot::Image.
 		PackedByteArray bytes;
-		bytes.resize(resolution * resolution * 3 * sizeof(float));
-		memcpy(bytes.ptrw(), result[0].data(), bytes.size());
+		bytes.resize(xTextureSize * yTextureSize * 3 * sizeof(float));
+		memcpy(bytes.ptrw(), result.data(), bytes.size());
 
 		image.instantiate();
 
-		image->set_data(resolution, resolution, false, Image::FORMAT_RGBF, bytes);
+		image->set_data(xTextureSize, yTextureSize, false, Image::FORMAT_RGBF, bytes);
 
 		print_line("Done\n");
 	} catch (std::exception &e) {
